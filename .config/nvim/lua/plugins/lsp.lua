@@ -6,6 +6,7 @@ return {
         gopls = {
           settings = {
             gopls = {
+              gofumpt = true,
               analyses = {
                 ST1000 = false,
               },
