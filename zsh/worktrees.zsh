@@ -14,9 +14,19 @@ wt_default_branch() {
   echo "$ref"
 }
 
+wt_repo_root() {
+  if [[ -d "$PWD/.git" ]]; then
+    echo "$PWD"
+    return 0
+  fi
+
+  echo "error: run this from the repo root (the directory containing .git)" >&2
+  return 1
+}
+
 # create a new bare-controlled repo + main worktree
 wtinit() {
-  local name="$1" url="$2"
+ local name="$1" url="$2"
 
   [[ -z "$name" || -z "$url" ]] && {
     echo "usage: wtinit <name> <repo-url>"
@@ -44,90 +54,89 @@ wtinit() {
 
 # add a new worktree from origin/main
 wtadd() {
-  local repo="$1"
-  local branch="$2"
+  local branch="$1" dir="$2"
 
-  [[ -z "$repo" || -z "$branch" ]] && {
-    echo "usage: wtadd <repo> <branch>"
+  [[ -z "$branch" || -z "$dir" ]] && {
+    echo "usage: wtadd <branch> <dir-name>"
     return 1
   }
 
   local root gitdir default
-  root="$(wt_root)/$repo"
+  root="$(wt_repo_root)" || return 1
   gitdir="$root/.git"
   default="$(wt_default_branch "$gitdir")" || return 1
 
   git --git-dir="$gitdir" fetch origin || return 1
-  git --git-dir="$gitdir" worktree add -b "$branch" "$root/$branch" "origin/$default"
+  git --git-dir="$gitdir" worktree add -b "$branch" "$root/$dir" "origin/$default"
 }
 
 # add a worktree from an existing remote branch
 wttrack() {
-  local repo="$1"
-  local branch="$2"
-
-  [[ -z "$repo" || -z "$branch" ]] && {
-    echo "usage: wttrack <repo> <remote-branch>"
+  local branch="$1" dir="$2"
+  [[ -z "$branch" || -z "$dir" ]] && {
+    echo "usage: wttrack <remote-branch> <dir-name>"
     return 1
   }
 
   local root gitdir
-  root="$(wt_root)/$repo"
+  root="$(wt_repo_root)" || return 1
   gitdir="$root/.git"
 
-  git --git-dir="$gitdir" fetch origin || return 1
-  git --git-dir="$gitdir" worktree add -b "$branch" "$root/$branch" "origin/$branch"
+  git --git-dir="$gitdir" fetch origin "$branch" || return 1
+  
+  if git --git-dir="$gitdir" show-ref --verify --quiet "refs/heads/$branch"; then
+    # branch already exists → just attach
+    git --git-dir="$gitdir" worktree add "$root/$dir" "$branch"
+  else
+    # create branch from fetched commit
+    git --git-dir="$gitdir" worktree add -b "$branch" "$root/$dir" FETCH_HEAD
+  fi
 }
 
 # list worktrees for a repo
 wtls() {
-  local repo="$1"
-  [[ -z "$repo" ]] && {
-    echo "usage: wtls <repo>"
-    return 1
-  }
+  local root gitdir
+  root="$(wt_repo_root)" || return 1
+  gitdir="$root/.git"
 
-  git --git-dir="$(wt_root)/$repo/.git" worktree list
+  git --git-dir="$gitdir" worktree list
 }
 
 # remove a worktree
 wtrm() {
-  local repo="$1"
-  local branch="$2"
-
-  [[ -z "$repo" || -z "$branch" ]] && {
-    echo "usage: wtrm <repo> <branch>"
-    return 1
-  }
-
-  git --git-dir="$(wt_root)/$repo/.git" worktree remove "$(wt_root)/$repo/$branch"
-}
-
-# jump into a repo worktree
-wtcd() {
-  local repo="$1" branch="$2"
-  [[ -z "$repo" ]] && {
-    echo "usage: wtcd <repo> [branch]"
+  local branch="$1"
+  [[ -z "$branch" ]] && {
+    echo "usage: wtrm <branch>"
     return 1
   }
 
   local root gitdir
-  root="$(wt_root)/$repo"
+  root="$(wt_repo_root)" || return 1
+  gitdir="$root/.git"
+
+  git --git-dir="$gitdir" worktree remove "$root/$branch"
+}
+
+# jump into a repo worktree
+wtcd() {
+  local branch="$1"
+  local root gitdir
+
+  root="$(wt_repo_root)" || return 1
   gitdir="$root/.git"
 
   if [[ -z "$branch" ]]; then
     branch="$(wt_default_branch "$gitdir")" || return 1
   fi
-  cd "$(wt_root)/$branch" || return 1
+
+  cd "$root/$branch" || return 1
 }
 
 wtprune() {
-  local repo="$1"
-  [[ -z "$repo" ]] && {
-    echo "usage: wtprune <repo>"
-    return 1
-  }
-  git --git-dir="$(wt_root)/$repo/.git" worktree prune
+  local root gitdir
+  root="$(wt_repo_root)" || return 1
+  gitdir="$root/.git"
+  git --git-dir="$gitdir" worktree prune
 }
 
 wtbranches() {
@@ -136,5 +145,10 @@ wtbranches() {
     echo "usage: wtbranches <repo>"
     return 1
   }
-  git --git-dir="$(wt_root)/$repo/.git" branch
+
+  local root gitdir
+  root="$(wt_repo_root)" || return 1
+  gitdir="$root/.git"
+
+  git --git-dir="$gitdir" branch
 }
