@@ -1,5 +1,4 @@
-# If you come from bash you might have to change your $PATH.
-# export PATH=$HOME/bin:$HOME/.local/bin:/usr/local/bin:$PATH
+# If you come from bash you might have to change your $PATH. export PATH=$HOME/bin:$HOME/.local/bin:/usr/local/bin:$PATH
 
 # Path to your Oh My Zsh installation.
 export ZSH="$HOME/.oh-my-zsh"
@@ -111,3 +110,5 @@ export NVM_DIR="$HOME/.nvm"
 export PATH="$PATH:/Users/gb/.lmstudio/bin"
 # End of LM Studio CLI section
 export PATH=$PATH:~/go/bin
+
+source ~/dotfiles/zsh/worktrees.zsh
