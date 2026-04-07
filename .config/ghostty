@@ -1,0 +1,5 @@
+background-opacity=0.9
+macos-icon=xray
+font-family="0xProto Nerd Font Mono"
+keybind = global:ctrl+grave_accent=toggle_quick_terminal
+theme = CarbonFox
