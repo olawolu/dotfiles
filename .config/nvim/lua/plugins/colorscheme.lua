@@ -2,6 +2,11 @@ return {
   -- add kanagawa
   { "rebelot/kanagawa.nvim" },
   { "EdenEast/nightfox.nvim" },
+  {
+    "scottmckendry/cyberdream.nvim",
+    lazy = false,
+    priority = 1000,
+  },
   -- {
   --   "ricardoraposo/nightwolf.nvim",
   --   -- lazy = false
@@ -25,7 +30,7 @@ return {
   {
     "LazyVim/LazyVim",
     opts = {
-      colorscheme = "carbonfox",
+      colorscheme = "cyberdream",
     },
   },
 }

@@ -6,6 +6,8 @@ return {
         gopls = {
           settings = {
             gopls = {
+              usePlaceholders = false,
+              completeFunctionCalls = false,
               gofumpt = true,
               analyses = {
                 ST1000 = false,
@@ -14,6 +16,8 @@ return {
           },
         },
       },
+      inlay_hints = { enabled = false },
+      diagnostics = { virtual_text = false },
     },
   },
   {
@@ -23,7 +27,12 @@ return {
       "neovim/nvim-lspconfig",
       "nvim-treesitter/nvim-treesitter",
     },
-    opts = function(_, opts)
+    opts = {
+      lsp_inlay_hints = {
+        enable = false,
+      },
+    },
+    config = function(_, opts)
       require("go").setup(opts)
 
       local format_sync_grp = vim.api.nvim_create_augroup("GoFormat", {})
